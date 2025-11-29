@@ -1,52 +1,37 @@
-class Target:
-    """
-    O Target define a interface específica do domínio que o código cliente usa.
-    """
+# Alvo (Target) - A interface que o cliente espera usar
+class SistemaPagamentoNovo:
+    def processar_pagamento(self, valor):
+        print(f"Processando pagamento de R${valor} no sistema novo.")
 
-    def request(self) -> str:
-        return "Target: O comportamento padrão do target."
+# Adaptada (Adaptee) - A classe existente que tem uma interface incompatível
+class SistemaPagamentoAntigo:
+    def realizar_cobranca_especifica(self, valor_string):
+        print(f"Cobrança antiga realizada: {valor_string}")
 
+# Adaptador (Adapter)
+class AdaptadorPagamento(SistemaPagamentoNovo):
+    def __init__(self, sistema_antigo: SistemaPagamentoAntigo):
+        self.sistema_antigo = sistema_antigo
 
-class Adaptee:
-    """
-    O Adaptee contém algum comportamento útil, mas sua interface é incompatível
-    com o código cliente existente. O Adaptee precisa de alguma adaptação antes
-    que o código cliente possa usá-lo.
-    """
+    def processar_pagamento(self, valor):
+        # O adaptador converte a interface do Alvo para a interface da Adaptada
+        valor_formatado = f"R$ {valor:.2f}"
+        print("Adaptador: Convertendo dados para o sistema antigo...")
+        self.sistema_antigo.realizar_cobranca_especifica(valor_formatado)
 
-    def specific_request(self) -> str:
-        return ".eetpadA eht fo roivaheb laicepS"
-
-
-class Adapter(Target):
-    """
-    O Adapter torna a interface do Adaptee compatível com a interface do Target.
-    """
-
-    def __init__(self, adaptee: Adaptee) -> None:
-        self.adaptee = adaptee
-
-    def request(self) -> str:
-        return f"Adapter: (TRADUZIDO) {self.adaptee.specific_request()[::-1]}"
-
-
-def client_code(target: Target) -> None:
-    """
-    O código cliente suporta todas as classes que seguem a interface Target.
-    """
-    print(target.request(), end="")
-
+# Código Cliente
+def cliente_codigo(sistema: SistemaPagamentoNovo):
+    sistema.processar_pagamento(100.50)
 
 if __name__ == "__main__":
-    print("Cliente: Eu posso trabalhar bem com objetos Target:")
-    target = Target()
-    client_code(target)
-    print("\n")
+    print("Cliente: Posso trabalhar perfeitamente com o sistema novo:")
+    novo_sistema = SistemaPagamentoNovo()
+    cliente_codigo(novo_sistema)
 
-    adaptee = Adaptee()
-    print("Cliente: A classe Adaptee tem uma interface estranha. Veja, eu não entendo:")
-    print(f"Adaptee: {adaptee.specific_request()}", end="\n\n")
+    print("\nCliente: O sistema antigo tem uma interface estranha. Não consigo usar diretamente.")
+    antigo_sistema = SistemaPagamentoAntigo()
+    # antigo_sistema.processar_pagamento(100) # Isso daria erro
 
-    print("Cliente: Mas eu posso trabalhar com ela via Adapter:")
-    adapter = Adapter(adaptee)
-    client_code(adapter)
+    print("Cliente: Mas com o adaptador, tudo funciona:")
+    adaptador = AdaptadorPagamento(antigo_sistema)
+    cliente_codigo(adaptador)

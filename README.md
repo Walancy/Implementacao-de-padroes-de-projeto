@@ -2,73 +2,144 @@
 
 Este repositório contém exemplos de implementação de três padrões de projeto clássicos: **Factory Method** (Criacional), **Adapter** (Estrutural) e **Observer** (Comportamental).
 
-Os exemplos foram baseados no catálogo do [Refactoring Guru](https://refactoring.guru/pt-br/design-patterns), que é uma excelente referência para estudo de Design Patterns.
+Os exemplos foram baseados no catálogo do [Refactoring Guru](https://refactoring.guru/pt-br/design-patterns).
 
-> **Nota sobre autoria**: O conteúdo teórico e a estrutura dos exemplos são baseados no material do Refactoring Guru.
-> **LLM Utilizada**: Os exemplos de código e explicações foram gerados com o auxílio da IA **Gemini**.
 
----
-
-## 1. Factory Method (Criacional)
-
-### Propósito
-O **Factory Method** é um padrão criacional que define uma interface para criar um objeto, mas permite às subclasses alterar o tipo de objetos que serão criados.
-
-### Problema que resolve
-Imagine que você está criando uma aplicação de logística. Inicialmente, ela só lida com transporte por caminhões. Se sua aplicação crescer e precisar lidar com navios, você teria que alterar todo o código que instancia `Caminhao` para instanciar `Navio` dependendo do contexto, gerando um código acoplado e difícil de manter.
-
-### Solução
-O padrão Factory Method sugere que você substitua as chamadas diretas de construção de objetos (usando o operador `new`) por chamadas para um método fábrica especial. As subclasses podem sobrescrever esse método para retornar diferentes tipos de produtos.
-
-### Diagrama UML (Descrição)
-- **Creator (Criador)**: Classe abstrata que declara o método fábrica.
-- **ConcreteCreator (Criador Concreto)**: Sobrescreve o método fábrica para retornar um tipo específico de produto.
-- **Product (Produto)**: Interface comum para todos os objetos criados.
-- **ConcreteProduct (Produto Concreto)**: Implementação específica da interface Produto.
-
-### Código
-O exemplo está na pasta `factory_method/`. Ele demonstra uma classe `Creator` que pode gerar diferentes `Product`s dependendo da subclasse (`ConcreteCreator1` ou `ConcreteCreator2`).
 
 ---
 
-## 2. Adapter (Estrutural)
+## 1. Padrão Criacional: Factory Method
 
-### Propósito
-O **Adapter** é um padrão estrutural que permite que objetos com interfaces incompatíveis colaborem entre si.
+### Problema
+Imagine que você está criando uma aplicação de gestão de logística. A primeira versão da sua aplicação só pode lidar com transporte por caminhões, então a maior parte do seu código fica dentro da classe `Caminhao`. Depois de um tempo, sua aplicação se torna bastante popular. Cada dia você recebe dezenas de solicitações de empresas de transporte marítimo para que incorporem a logística do mar na aplicação.
 
-### Problema que resolve
-Imagine que você tem uma aplicação que consome dados em XML, mas precisa usar uma biblioteca de análise de terceiros que só aceita dados em JSON. Você não pode mudar a biblioteca (é de terceiros) e mudar sua aplicação pode ser muito custoso.
+Porém, o código é acoplado. Adicionar navios exigiria alterações em todo o código base.
 
 ### Solução
-Você cria um *adaptador*. É um objeto especial que converte a interface de um objeto para que outro objeto possa entendê-lo. Ele envolve um dos objetos para esconder a complexidade da conversão acontecendo nos bastidores.
+O padrão Factory Method sugere que você substitua as chamadas diretas de construção de objetos (usando o operador `new` ou init) por chamadas para um método *factory* especial. Os objetos ainda são criados via operador `new`, mas isso está sendo chamado de dentro do método *factory*.
 
-### Diagrama UML (Descrição)
-- **Target (Alvo)**: Define a interface específica do domínio que o cliente usa.
-- **Client (Cliente)**: Colabora com objetos que seguem a interface Target.
-- **Adaptee (Adaptado)**: Define uma interface existente que precisa ser adaptada.
-- **Adapter (Adaptador)**: Adapta a interface do Adaptee para a interface do Target.
+### Diagrama UML (Conceitual)
+```mermaid
+classDiagram
+    class Creator {
+        +factoryMethod() Product
+        +someOperation()
+    }
+    class ConcreteCreatorA {
+        +factoryMethod() Product
+    }
+    class ConcreteCreatorB {
+        +factoryMethod() Product
+    }
+    class Product {
+        <<interface>>
+        +doStuff()
+    }
+    class ConcreteProductA {
+        +doStuff()
+    }
+    class ConcreteProductB {
+        +doStuff()
+    }
 
-### Código
-O exemplo está na pasta `adapter/`. Ele mostra como um `Adapter` permite que o código cliente (que espera uma string normal) trabalhe com uma classe `Adaptee` que retorna uma string invertida e estranha.
+    Creator <|-- ConcreteCreatorA
+    Creator <|-- ConcreteCreatorB
+    Product <|-- ConcreteProductA
+    Product <|-- ConcreteProductB
+    ConcreteCreatorA ..> ConcreteProductA
+    ConcreteCreatorB ..> ConcreteProductB
+```
+
+### Explicação do Código (`factory_method/main.py`)
+No exemplo implementado:
+- `Logistica` é a classe Criadora (Creator) que declara o método fábrica `criar_transporte`.
+- `LogisticaViaria` e `LogisticaMaritima` são criadores concretos que retornam `Caminhao` e `Navio`, respectivamente.
+- O cliente (`planejar_entrega`) trabalha com a interface `Transporte`, sem saber se está usando um caminhão ou um navio.
 
 ---
 
-## 3. Observer (Comportamental)
+## 2. Padrão Estrutural: Adapter
 
-### Propósito
-O **Observer** é um padrão comportamental que permite que você defina um mecanismo de assinatura para notificar múltiplos objetos sobre quaisquer eventos que aconteçam com o objeto que eles estão observando.
-
-### Problema que resolve
-Imagine que você tem dois objetos: um Cliente e uma Loja. O cliente quer saber quando um produto específico chega (ex: iPhone novo). O cliente poderia ir à loja todos os dias checar (ineficiente) ou a loja poderia mandar spam para todos os clientes sempre que algo chegasse (irritante).
+### Problema
+Imagine que você está criando uma aplicação de monitoramento do mercado de ações. A aplicação baixa os dados da bolsa de XML para exibir gráficos. Em algum momento, você decide melhorar a aplicação integrando uma biblioteca de análise inteligente de terceiros. Mas há uma pegadinha: a biblioteca de análise só trabalha com dados em formato JSON.
 
 ### Solução
-O objeto que possui o estado interessante é chamado de *Subject* (Sujeito). Os objetos que querem rastrear as mudanças são chamados de *Observers* (Observadores). O Subject mantém uma lista de Observers e os notifica automaticamente de qualquer mudança de estado, chamando um método de notificação neles.
+Você pode criar um *adaptador*. É um objeto especial que converte a interface de um objeto para que outro objeto possa entendê-lo. Um adaptador encobre um dos objetos para esconder a complexidade da conversão acontecendo nos bastidores.
 
-### Diagrama UML (Descrição)
-- **Subject (Sujeito)**: Mantém uma lista de dependentes (observers) e fornece métodos para adicionar e remover observers.
-- **Observer (Observador)**: Define uma interface de atualização para objetos que devem ser notificados sobre mudanças no Subject.
-- **ConcreteSubject**: Armazena o estado de interesse e notifica os observers quando o estado muda.
-- **ConcreteObserver**: Mantém uma referência a um objeto ConcreteSubject e implementa a interface de atualização para manter seu estado consistente com o do subject.
+### Diagrama UML (Conceitual)
+```mermaid
+classDiagram
+    class Client {
+    }
+    class Target {
+        +request()
+    }
+    class Adapter {
+        -adaptee: Adaptee
+        +request()
+    }
+    class Adaptee {
+        +specificRequest()
+    }
 
-### Código
-O exemplo está na pasta `observer/`. Ele demonstra um `Subject` que gera números aleatórios e notifica dois `Observer`s diferentes (`ConcreteObserverA` e `ConcreteObserverB`), que reagem a condições específicas desses números.
+    Client ..> Target
+    Target <|-- Adapter
+    Adapter --> Adaptee
+```
+
+### Explicação do Código (`adapter/main.py`)
+No exemplo implementado:
+- `SistemaPagamentoNovo` é o **Target** (o que o cliente espera usar).
+- `SistemaPagamentoAntigo` é o **Adaptee** (o sistema legado incompatível).
+- `AdaptadorPagamento` faz a ponte, recebendo a chamada `processar_pagamento` e convertendo para `realizar_cobranca_especifica` do sistema antigo.
+
+---
+
+## 3. Padrão Comportamental: Observer
+
+### Problema
+Imagine que você tem dois tipos de objetos: um objeto `Cliente` e um objeto `Loja`. O cliente está muito interessado em uma marca particular de produto (digamos, um novo modelo de iPhone) que deve ficar disponível na loja em breve.
+
+O cliente pode visitar a loja todos os dias para checar a disponibilidade do produto. Mas enquanto o produto ainda está a caminho, a maioria dessas viagens será em vão.
+
+### Solução
+O padrão sugere que você adicione um mecanismo de assinatura para a classe notificar objetos individuais sobre quaisquer eventos que aconteçam com o objeto que eles estão observando.
+
+### Diagrama UML (Conceitual)
+```mermaid
+classDiagram
+    class Subject {
+        -observers: List
+        +attach(observer)
+        +detach(observer)
+        +notify()
+    }
+    class ConcreteSubject {
+        -state
+        +getState()
+        +setState()
+    }
+    class Observer {
+        <<interface>>
+        +update()
+    }
+    class ConcreteObserver {
+        -subject
+        +update()
+    }
+
+    Subject <|-- ConcreteSubject
+    Observer <|-- ConcreteObserver
+    Subject o-- Observer
+```
+
+### Explicação do Código (`observer/main.py`)
+No exemplo implementado:
+- `Newsletter` atua como o **Subject** (sujeito).
+- `Leitor` é o **Observer** (observador).
+- Quando a `TechNewsletter` (Concrete Subject) recebe uma `nova_noticia`, ela itera sobre sua lista de assinantes e chama o método `atualizar` de cada um, notificando-os automaticamente.
+
+---
+
+## Referências
+- [Refactoring Guru - Design Patterns](https://refactoring.guru/pt-br/design-patterns)

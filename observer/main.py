@@ -1,118 +1,68 @@
-from __future__ import annotations
 from abc import ABC, abstractmethod
-from random import randrange
-from typing import List
 
-
-class Subject(ABC):
-    """
-    A interface Subject declara um conjunto de métodos para gerenciar assinantes.
-    """
-
+# Interface do Assinante (Observer)
+class Assinante(ABC):
     @abstractmethod
-    def attach(self, observer: Observer) -> None:
-        """
-        Anexa um observer ao subject.
-        """
+    def atualizar(self, contexto):
+        pass
+
+# Interface da Newsletter (Subject)
+class Newsletter(ABC):
+    @abstractmethod
+    def inscrever(self, assinante: Assinante):
         pass
 
     @abstractmethod
-    def detach(self, observer: Observer) -> None:
-        """
-        Desanexa um observer do subject.
-        """
+    def desinscrever(self, assinante: Assinante):
         pass
 
     @abstractmethod
-    def notify(self) -> None:
-        """
-        Notifica todos os observers sobre um evento.
-        """
+    def notificar(self):
         pass
 
+# Implementação Concreta da Newsletter
+class TechNewsletter(Newsletter):
+    def __init__(self):
+        self._assinantes = []
+        self._ultima_noticia = ""
 
-class ConcreteSubject(Subject):
-    """
-    O Subject possui algum estado importante e notifica os observers quando o estado muda.
-    """
+    def inscrever(self, assinante: Assinante):
+        self._assinantes.append(assinante)
+        print(f"Assinante adicionado.")
 
-    _state: int = None
-    """
-    Para simplificar, o estado do Subject, essencial para todos os assinantes, é armazenado nesta variável.
-    """
+    def desinscrever(self, assinante: Assinante):
+        self._assinantes.remove(assinante)
+        print(f"Assinante removido.")
 
-    _observers: List[Observer] = []
-    """
-    Lista de assinantes. Na vida real, a lista de assinantes pode ser armazenada de forma mais abrangente
-    (categorizada por tipo de evento, etc.).
-    """
+    def notificar(self):
+        print("Notificando todos os assinantes...")
+        for assinante in self._assinantes:
+            assinante.atualizar(self._ultima_noticia)
 
-    def attach(self, observer: Observer) -> None:
-        print("Subject: Anexou um observer.")
-        self._observers.append(observer)
+    def nova_noticia(self, noticia):
+        print(f"\nNova notícia publicada: {noticia}")
+        self._ultima_noticia = noticia
+        self.notificar()
 
-    def detach(self, observer: Observer) -> None:
-        self._observers.remove(observer)
+# Implementação Concreta do Assinante
+class Leitor(Assinante):
+    def __init__(self, nome):
+        self.nome = nome
 
-    def notify(self) -> None:
-        """
-        Aciona uma atualização em cada assinante.
-        """
-        print("Subject: Notificando observers...")
-        for observer in self._observers:
-            observer.update(self)
-
-    def some_business_logic(self) -> None:
-        """
-        Geralmente, a lógica de assinatura é apenas uma fração do que um Subject pode fazer.
-        Subjects comumente mantêm alguma lógica de negócios importante, que aciona
-        um método de notificação sempre que algo importante está prestes a acontecer (ou depois).
-        """
-        print("\nSubject: Estou fazendo algo importante.")
-        self._state = randrange(0, 10)
-
-        print(f"Subject: Meu estado acabou de mudar para: {self._state}")
-        self.notify()
-
-
-class Observer(ABC):
-    """
-    A interface Observer declara o método de atualização, usado pelos subjects.
-    """
-
-    @abstractmethod
-    def update(self, subject: Subject) -> None:
-        """
-        Recebe atualização do subject.
-        """
-        pass
-
-
-class ConcreteObserverA(Observer):
-    def update(self, subject: Subject) -> None:
-        if subject._state < 3:
-            print("ConcreteObserverA: Reagiu ao evento.")
-
-
-class ConcreteObserverB(Observer):
-    def update(self, subject: Subject) -> None:
-        if subject._state == 0 or subject._state >= 2:
-            print("ConcreteObserverB: Reagiu ao evento.")
-
+    def atualizar(self, contexto):
+        print(f"{self.nome} recebeu a notícia: {contexto}")
 
 if __name__ == "__main__":
-    # O código cliente.
-    subject = ConcreteSubject()
+    newsletter = TechNewsletter()
 
-    observer_a = ConcreteObserverA()
-    subject.attach(observer_a)
+    leitor1 = Leitor("João")
+    leitor2 = Leitor("Maria")
 
-    observer_b = ConcreteObserverB()
-    subject.attach(observer_b)
+    newsletter.inscrever(leitor1)
+    newsletter.inscrever(leitor2)
 
-    subject.some_business_logic()
-    subject.some_business_logic()
+    newsletter.nova_noticia("Saiu o novo iPhone!")
 
-    subject.detach(observer_a)
+    newsletter.desinscrever(leitor1)
 
-    subject.some_business_logic()
+    newsletter.nova_noticia("Aprenda Design Patterns com Python.")
